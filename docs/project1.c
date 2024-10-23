@@ -26,16 +26,24 @@ int get_random(int min, int max) {
     return (rand() % (max - min + 1)) + min;
 }
 
+// Function to generate Poisson-distributed inter-arrival times
+double generate_poisson_arrival(double lambda) {
+    double u = (double)rand() / RAND_MAX;
+    return -log(1 - u) / lambda;
+}
+
 // Function to simulate CSMA/CA for a station
 void simulate_csma(Station *station, int lambda, int topology) {
     int CW = CW0;
-    int time = 0;  // Time in microseconds
+    double time = 0;  // Time in microseconds
+    double next_arrival = generate_poisson_arrival(lambda) * 1000000;  // Convert to microseconds
     
     while (time < SIMULATION_TIME * 1000000) {  // Convert seconds to microseconds
-        // Randomly generate the arrival of frames based on Poisson process
-        if (rand() % 1000 < lambda) {
+        // Check if a new frame arrives
+        if (time >= next_arrival) {
             // New frame arrives, calculate backoff
             station->backoff = get_random(0, CW);
+            next_arrival += generate_poisson_arrival(lambda) * 1000000;  // Schedule next arrival
             
             // Start backoff countdown
             while (station->backoff > 0) {
